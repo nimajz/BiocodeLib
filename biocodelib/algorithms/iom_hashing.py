@@ -1,4 +1,5 @@
 import numpy as np
+import hashlib
 
 def apply_iom_hashing(features, key, groups=32, group_size=4):
     """
@@ -10,7 +11,11 @@ def apply_iom_hashing(features, key, groups=32, group_size=4):
     
     Divides features into groups, finds index of max in each, encodes sparsely.
     """
-    np.random.seed(hash(tuple(key)))
+    # Derive a stable 32-bit seed from the key
+    key_arr = np.asarray(key, dtype=np.uint8)
+    digest = hashlib.blake2b(key_arr.tobytes(), digest_size=8).digest()
+    seed = int.from_bytes(digest, 'little') % (2**32)
+    np.random.seed(seed)
     permuted = features[np.random.permutation(len(features))]
     reshaped = permuted[:groups * group_size].reshape(groups, group_size)
     indices = np.argmax(reshaped, axis=1)
