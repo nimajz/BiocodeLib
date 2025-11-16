@@ -1,0 +1,8 @@
+include README.md
+include LICENSE
+include requirements.txt
+include pyproject.toml
+recursive-include biocodelib *.py
+global-exclude __pycache__
+global-exclude *.py[co]
+
