@@ -1,21 +1,33 @@
+# biocodelib/feature_extraction/minutiae_extraction.py
 import cv2
 import numpy as np
 from skimage.morphology import skeletonize
 
 def extract_minutiae(image):
     """
-    Extract minutiae points from fingerprint image.
+    استخراج Minutiae (ending + bifurcation) — مطابق PDF
+    خروجی: آرایه 2D با شکل (N, 3): [x, y, type]
     """
-    if len(image.shape) == 3:
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # باینری کردن
     _, binary = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY_INV)
-    skeleton = skeletonize(binary // 255).astype(np.uint8) * 255
+
+    # اسکلت‌سازی
+    skeleton = skeletonize(binary > 127).astype(np.uint8) * 255
+
     minutiae = []
-    rows, cols = skeleton.shape
-    for i in range(1, rows - 1):
-        for j in range(1, cols - 1):
-            if skeleton[i, j] == 255:
-                neighbors = np.sum(skeleton[i-1:i+2, j-1:j+2]) // 255 - 1
-                if neighbors == 1 or neighbors == 3:
-                    minutiae.append((j, i))
-    return np.array(minutiae).flatten() if minutiae else np.array([])
+    h, w = skeleton.shape
+    for y in range(1, h - 1):
+        for x in range(1, w - 1):
+            if skeleton[y, x] == 255:
+                neighbors = [
+                    skeleton[y-1, x-1], skeleton[y-1, x], skeleton[y-1, x+1],
+                    skeleton[y,   x-1],                   skeleton[y,   x+1],
+                    skeleton[y+1, x-1], skeleton[y+1, x], skeleton[y+1, x+1]
+                ]
+                count = sum(1 for n in neighbors if n == 255)
+                if count == 1:
+                    minutiae.append([x, y, 0])  # 0 = ending
+                elif count == 3:
+                    minutiae.append([x, y, 1])  # 1 = bifurcation
+
+    return np.array(minutiae, dtype=float)  # خروجی: (N, 3)
