@@ -47,9 +47,6 @@ results, best_algorithm = compare_algorithms(features)
 print(f"Best algorithm: {best_algorithm}")
 ```
 
-## Documentation
-
-For detailed documentation and examples, see the [ALGORITHMS_GUIDE_FA.md](ALGORITHMS_GUIDE_FA.md) file.
 
 ## License
 
